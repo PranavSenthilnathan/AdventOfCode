@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "Today": {
+      "commandName": "Project"
+    },
+    "Pick": {
+      "commandName": "Project",
+      "commandLineArgs": "2024"
+    }
+  }
+}
