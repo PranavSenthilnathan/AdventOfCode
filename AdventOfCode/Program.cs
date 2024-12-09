@@ -1,13 +1,8 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 
 namespace AdventOfCode
 {
-    //public static partial class AnswerMethods
-    //{
-    //    public static partial Func<string, string>[] GetAnswerMethods();
-    //}
-
     internal class Program
     {
         static Dictionary<(int, int), string> inMemoryInputCache = new();
@@ -49,7 +44,7 @@ namespace AdventOfCode
 
                     if (args.Length == 3)
                     {
-                        if (!int.TryParse(args[1], out var pt))
+                        if (!int.TryParse(args[2], out var pt))
                         {
                             PrintUsage();
                             return;
@@ -90,8 +85,10 @@ namespace AdventOfCode
                     var runArg = GetInputAsync(year, day).GetAwaiter().GetResult();
                     foreach (var m in runs)
                     {
+                        var timer = Stopwatch.StartNew();
                         var ans = m(runArg);
                         Console.WriteLine($"""The answer for {new DateTime(year, 12, day).ToShortDateString()} part {part} is: {ans}""");
+                        Console.WriteLine($"Elapsed time: {timer.Elapsed}");
                     }
                 }
             }

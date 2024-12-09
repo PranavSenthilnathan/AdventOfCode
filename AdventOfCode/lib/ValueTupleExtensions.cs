@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Numerics;
 
 namespace AdventOfCode
 {
@@ -13,6 +8,11 @@ namespace AdventOfCode
             where T1 : IAdditionOperators<T1, T1, T1>
             where T2 : IAdditionOperators<T2, T2, T2>
             => (a.Item1 + b.Item1, a.Item2 + b.Item2);
+
+        public static (T1, T2) Minus<T1, T2>(this (T1, T2) a, (T1, T2) b)
+            where T1 : ISubtractionOperators<T1, T1, T1>
+            where T2 : ISubtractionOperators<T2, T2, T2>
+            => (a.Item1 - b.Item1, a.Item2 - b.Item2);
 
         /// <summary>
         /// Clockwise from North
@@ -83,5 +83,33 @@ namespace AdventOfCode
             where T1 : IIncrementOperators<T1>, IDecrementOperators<T1>, IAdditiveIdentity<T1, T1>
             where T2 : IIncrementOperators<T2>, IDecrementOperators<T2>, IAdditiveIdentity<T2, T2>
             => (T1.AdditiveIdentity, T2.AdditiveIdentity).GetIntercardinalNeighbors();
+
+        public static bool LessThan<T1, T2>(this (T1, T2) pt1, (T1, T2) pt2)
+            where T1 : IComparisonOperators<T1, T1, bool>
+            where T2 : IComparisonOperators<T2, T2, bool>
+        {
+            return pt1.Item1 < pt2.Item1 && pt1.Item2 < pt2.Item2;
+        }
+
+        public static bool LessThanOrEqualTo<T1, T2>(this (T1, T2) pt1, (T1, T2) pt2)
+            where T1 : IComparisonOperators<T1, T1, bool>
+            where T2 : IComparisonOperators<T2, T2, bool>
+        {
+            return pt1.Item1 <= pt2.Item1 && pt1.Item2 <= pt2.Item2;
+        }
+
+        public static bool GreaterThan<T1, T2>(this (T1, T2) pt1, (T1, T2) pt2)
+            where T1 : IComparisonOperators<T1, T1, bool>
+            where T2 : IComparisonOperators<T2, T2, bool>
+        {
+            return pt1.Item1 > pt2.Item1 && pt1.Item2 > pt2.Item2;
+        }
+
+        public static bool GreaterThanOrEqualTo<T1, T2>(this (T1, T2) pt1, (T1, T2) pt2)
+            where T1 : IComparisonOperators<T1, T1, bool>
+            where T2 : IComparisonOperators<T2, T2, bool>
+        {
+            return pt1.Item1 >= pt2.Item1 && pt1.Item2 >= pt2.Item2;
+        }
     }
 }
