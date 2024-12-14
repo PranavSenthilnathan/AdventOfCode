@@ -85,17 +85,17 @@ namespace AdventOfCode
             for (int i = 0; i < input.Length; i++)
             {
                 var s = input[i];
-                var A = s.Split(['+', ',']).ToArray();
+                var A = s.Split(['+', ',']);
                 var (xa, ya) = (BigInteger.Parse(A[1]), BigInteger.Parse(A[3]));
 
                 i++;
                 s = input[i];
-                var B = s.Split(['+', ',']).ToArray();
+                var B = s.Split(['+', ',']);
                 var (xb, yb) = (BigInteger.Parse(B[1]), BigInteger.Parse(B[3]));
 
                 i++;
                 s = input[i];
-                var G = s.Split(['=', ',']).ToArray();
+                var G = s.Split(['=', ',']);
                 var (xg, yg) = (BigInteger.Parse(G[1]), BigInteger.Parse(G[3]));
                 xg += new BigInteger(10000000000000);
                 yg += new BigInteger(10000000000000);
