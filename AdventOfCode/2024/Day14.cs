@@ -10,8 +10,6 @@ namespace AdventOfCode
         [AnswerMethod(2024, 14, 1)]
         public static string Part1(string[] input)
         {
-            var ans = 0;
-
             //input =
             //    """
             //    p=0,4 v=3,-3
@@ -56,8 +54,6 @@ namespace AdventOfCode
         [AnswerMethod(2024, 14, 2)]
         public static string Part2(string[] input)
         {
-            var ans = 0;
-
             //input =
             //    """
             //    p=0,4 v=3,-3
@@ -147,7 +143,7 @@ namespace AdventOfCode
                 }
             }
 
-            return res.Aggregate(1, (acc, m) => acc * m).ToString();
+            throw new Exception();
         }
     }
 }

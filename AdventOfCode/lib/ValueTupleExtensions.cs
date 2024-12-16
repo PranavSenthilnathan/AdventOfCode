@@ -112,4 +112,23 @@ namespace AdventOfCode
             return pt1.Item1 >= pt2.Item1 && pt1.Item2 >= pt2.Item2;
         }
     }
+
+    static class Direction
+    {
+        public static (int, int) North = (-1, 0);
+        public static (int, int) South = (1, 0);
+        public static (int, int) West = (0, -1);
+        public static (int, int) East = (0, 1);
+
+        public static (int, int) Left = West;
+        public static (int, int) Right = East;
+        public static (int, int) Down = South;
+        public static (int, int) Up = North;
+
+        public static (int, int) TurnRight(this (int, int) dir)
+            => (dir.Item2, -dir.Item1);
+
+        public static (int, int) TurnLeft(this (int, int) dir)
+            => (-dir.Item2, dir.Item1);
+    }
 }
