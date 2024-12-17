@@ -23,7 +23,7 @@ namespace AnswerMethodsGenerator
             postInitializationContext.AddSource("AnswerMethods.Generated.cs", SourceText.From("""
                 namespace AdventOfCode
                 {
-                    public static partial class AnswerMethods
+                    public partial class AnswerMethods
                     {
                         public static partial System.Func<string, string>[] GetAnswerMethods(int year, int day, int part);
                     }
@@ -76,15 +76,60 @@ namespace AnswerMethodsGenerator
                     var sb = new StringBuilder();
                     sb.AppendLine("""
                         namespace AdventOfCode;
-                        public static partial class AnswerMethods
+                        using BenchmarkDotNet.Attributes;
+                        public partial class AnswerMethods
                         {
+
+                        """);
+
+                    foreach (var grp in infos
+                        .Where(x => x != default)
+                        .SelectMany(info => info.attributes.Select(attr => (attr, info.methodName, info.argType)))
+                        .GroupBy(info => info.attr))
+                    {
+                        foreach (var func in grp)
+                        {
+                            sb.AppendLine($$"""
+                                    [MemoryDiagnoser]
+                                    public class Year_{{func.attr.Item1}}_Day_{{func.attr.Item2:D2}}_Part_{{func.attr.Item3}}_{{func.methodName.Replace(".", "_")}}
+                                    {
+                                        private {{func.argType switch
+                                        {
+                                            AnswerMethodArgumentType.None => $"string",
+                                            AnswerMethodArgumentType.String => $"string",
+                                            AnswerMethodArgumentType.StringArray => @$"string[]",
+                                        }}} input;
+
+                                        [GlobalSetup]
+                                        public void Setup() => input = Program.GetInputAsync({{func.attr.Item1}}, {{func.attr.Item2}}).GetAwaiter().GetResult(){{(func.argType == AnswerMethodArgumentType.StringArray ? ".Split('\\n')" : "")}};
+
+                                        [Benchmark]
+                                        public string Run()
+                                            => {{func.argType switch
+                                                {
+                                                    AnswerMethodArgumentType.None => $"{func.methodName}()",
+                                                    AnswerMethodArgumentType.String => $"{func.methodName}(input)",
+                                                    AnswerMethodArgumentType.StringArray => @$"{func.methodName}(input)",
+                                                }}};
+                                    }
+                                """);
+                        }
+                        var funcs = string.Join(", ", grp.Select(m => m.argType switch
+                        {
+                            AnswerMethodArgumentType.None => $"_ => {m.methodName}",
+                            AnswerMethodArgumentType.String => $"str => {m.methodName}(str)",
+                            AnswerMethodArgumentType.StringArray => @$"str => {m.methodName}(str.Split('\n'))",
+                        }));
+                    }
+
+                    sb.AppendLine(
+                        """
                             public static partial System.Func<string, string>[] GetAnswerMethods(int year, int day, int part)
                             {
                                 switch ((year, day, part))
                                 {
                         """);
 
-                    //sb.AppendLine("throw new Exception(\"tbd\");");
                     foreach (var grp in infos
                         .Where(x => x != default)
                         .SelectMany(info => info.attributes.Select(attr => (attr, info.methodName, info.argType)))

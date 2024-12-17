@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using BenchmarkDotNet.Running;
 using Microsoft.Extensions.Configuration;
 
 namespace AdventOfCode
@@ -11,7 +12,16 @@ namespace AdventOfCode
         {
             void PrintUsage()
             {
-                Console.WriteLine("Usage: AOC2024.exe [<year> [<day> [<part>]]]");
+                Console.WriteLine("""
+                    Usage: AOC2024.exe [<year> [<day> [<part>]]]
+                           AOC2024.exe benchmark
+                    """);
+            }
+
+            if (args.Length == 1 && args[0].ToLower() == "benchmark")
+            {
+                BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run();
+                return;
             }
 
             if (args.Length > 3)
@@ -94,40 +104,40 @@ namespace AdventOfCode
             }
 
             Console.WriteLine();
+        }
 
-            static async Task<string> GetInputAsync(int year, int day)
+        internal static async Task<string> GetInputAsync(int year, int day)
+        {
+            if (inMemoryInputCache.TryGetValue((year, day), out var cached))
             {
-                if (inMemoryInputCache.TryGetValue((year, day), out var cached))
-                {
-                    return cached;
-                }
-
-                var tempDir = Path.GetTempPath();
-                var tempFile = $"aoc_{year}_{day}.in";
-                var filePath = Path.Combine(tempDir, tempFile);
-                if (File.Exists(filePath))
-                {
-                    var ret = await File.ReadAllTextAsync(filePath);
-                    inMemoryInputCache[(year, day)] = ret;
-                    return ret;
-                }
-
-                var config = new ConfigurationBuilder().AddUserSecrets<Program>().Build();
-                var cookie = config["SessionCookie"];
-                if (cookie == null)
-                {
-                    throw new Exception("Could not find session cookie in user secrets.");
-                }
-
-                var client = new HttpClient();
-                // Get new cookie by going going to site on browser and inspecting the network request for any day's puzzle input
-                client.DefaultRequestHeaders.Add("Cookie", $"session={cookie}");
-                var input = await client.GetStringAsync($"https://adventofcode.com/{year}/day/{day}/input");
-                input = input.TrimEnd('\n');
-                await File.WriteAllTextAsync(filePath, input);
-                inMemoryInputCache[(year, day)] = input;
-                return input;
+                return cached;
             }
+
+            var tempDir = Path.GetTempPath();
+            var tempFile = $"aoc_{year}_{day}.in";
+            var filePath = Path.Combine(tempDir, tempFile);
+            if (File.Exists(filePath))
+            {
+                var ret = await File.ReadAllTextAsync(filePath);
+                inMemoryInputCache[(year, day)] = ret;
+                return ret;
+            }
+
+            var config = new ConfigurationBuilder().AddUserSecrets<Program>().Build();
+            var cookie = config["SessionCookie"];
+            if (cookie == null)
+            {
+                throw new Exception("Could not find session cookie in user secrets.");
+            }
+
+            var client = new HttpClient();
+            // Get new cookie by going going to site on browser and inspecting the network request for any day's puzzle input
+            client.DefaultRequestHeaders.Add("Cookie", $"session={cookie}");
+            var input = await client.GetStringAsync($"https://adventofcode.com/{year}/day/{day}/input");
+            input = input.TrimEnd('\n');
+            await File.WriteAllTextAsync(filePath, input);
+            inMemoryInputCache[(year, day)] = input;
+            return input;
         }
     }
 }

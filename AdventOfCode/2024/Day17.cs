@@ -1,7 +1,10 @@
 ﻿using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 using AdventOfCode.lib;
+using BenchmarkDotNet.Attributes;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace AdventOfCode
@@ -222,6 +225,156 @@ namespace AdventOfCode
             }
 
             throw new Exception();
+        }
+
+        [AnswerMethod(2024, 17, 2)]
+        public static string Part2_faster(string[] input)
+        {
+            //var p = input[4].Split(":", StringSplitOptions.TrimEntries)[1].Split(",", StringSplitOptions.TrimEntries).Select(long.Parse).ToArray();
+            byte[] p = [2, 4, 1, 7, 7, 5, 1, 7, 0, 3, 4, 1, 5, 5, 3, 0];
+            byte?[] cached = new byte?[1 << 10];
+            
+            var ret = Solve(p, 0, cached, p)!.ToString();
+            return ret!;
+
+            static long? Solve(ReadOnlySpan<byte> goal, long curr, byte?[] cached, byte[] p)
+            {
+                if (goal.Length == 0)
+                    return curr;
+
+                var last = goal[^1];
+                var pre = (curr << 3) & 0x3ff;
+                for (var i = 0L; i < 8; i++)
+                {
+                    var test = pre | i;
+                    var oneIter = cached[test];
+                    if (oneIter == null)
+                        oneIter = cached[test] = RunOneIter(test, p);
+                    if (oneIter == last)
+                    {
+                        var ret = Solve(goal[0..^1], (curr << 3) | i, cached, p);
+                        if (ret != null) return ret;
+                    }
+                }
+
+                return null;
+            }
+
+            static Vector256<uint> RunOneIterVec(Vector256<uint> a, byte[] p)
+            {
+                Vector256<uint> b = Vector256.Create(0u);
+                Vector256<uint> c = Vector256.Create(0u);
+                var ip = 0L;
+                while (ip < p.Length)
+                {
+                    var literal = (uint)p[ip + 1];
+                    var literalVec = Vector256.Create((uint)p[ip + 1]);
+                    var combo = Vector256.Create((uint)p[ip + 1]);
+                    combo = p[ip + 1] switch
+                    {
+                        4 => a,
+                        5 => b,
+                        6 => c,
+                        _ => combo
+                    };
+
+                    switch (p[ip])
+                    {
+                        case 0:
+                            a = Avx2.ShiftRightLogicalVariable(a, combo);// >> combo;
+                            break;
+                        case 1:
+                            b = b ^ literalVec;
+                            break;
+                        case 2:
+                            b = combo & Vector256.Create(0b111u);
+                            break;
+                        case 3:
+                            var comparison = Avx2.MoveMask(Avx2.CompareEqual(a, Vector256.Create(0u)).AsByte());
+                            if (comparison == 0)
+                            {
+                                ip = literal;
+                                goto End;
+                            }
+                            else if (comparison == -1)
+                            {
+                                break;
+                            }
+                            throw new Exception();
+                        case 4:
+                            b = b ^ c;
+                            break;
+                        case 5:
+                            return combo & Vector256.Create(0b111u);
+                        case 6:
+                            b = Avx2.ShiftRightLogicalVariable(a, combo);
+                            break;
+                        case 7:
+                            c = Avx2.ShiftRightLogicalVariable(a, combo);
+                            break;
+                    }
+                    ip += 2;
+                End:
+                    ;
+                }
+
+                throw new Exception();
+            }
+
+            static byte RunOneIter(long a, byte[] p)
+            {
+                long b = 0;
+                long c = 0;
+                var ip = 0L;
+                while (ip < p.Length)
+                {
+                    var literal = p[ip + 1];
+                    long combo = p[ip + 1];
+                    combo = combo switch
+                    {
+                        4 => a,
+                        5 => b,
+                        6 => c,
+                        _ => combo
+                    };
+
+                    switch (p[ip])
+                    {
+                        case 0:
+                            a = a >> (int)combo;
+                            break;
+                        case 1:
+                            b = b ^ literal;
+                            break;
+                        case 2:
+                            b = combo % 8;
+                            break;
+                        case 3:
+                            if (a != 0)
+                            {
+                                ip = literal;
+                                goto End;
+                            }
+                            break;
+                        case 4:
+                            b = b ^ c;
+                            break;
+                        case 5:
+                            return (byte)(combo % 8);
+                        case 6:
+                            b = a >> (int)combo;
+                            break;
+                        case 7:
+                            c = a >> (int)combo;
+                            break;
+                    }
+                    ip += 2;
+                End:
+                    ;
+                }
+
+                throw new Exception();
+            }
         }
     }
 }
