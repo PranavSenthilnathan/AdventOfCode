@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -45,5 +46,6 @@ namespace AdventOfCode.lib
 
         public static ref TValue? GetValueRefOrAddDefault<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TKey key, out bool exists) where TKey : notnull
             => ref CollectionsMarshal.GetValueRefOrAddDefault(dictionary, key, out exists);
+
     }
 }

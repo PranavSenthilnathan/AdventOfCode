@@ -243,19 +243,37 @@ namespace AdventOfCode
                     return curr;
 
                 var last = goal[^1];
-                var pre = (curr << 3) & 0x3ff;
-                for (var i = 0L; i < 8; i++)
+
+                var testVec = Vector256.Create<uint>([0, 1, 2, 3, 4, 5, 6, 7]);
+                testVec += Vector256.Create((uint)((curr << 3) & 0x3ff));
+                var solveRes = RunOneIterVec(testVec, p);
+                var testRes = Avx2.MoveMask(Avx2.CompareEqual(Vector256.Create<uint>(last), solveRes).AsByte());
+                if (testRes == 0)
                 {
-                    var test = pre | i;
-                    var oneIter = cached[test];
-                    if (oneIter == null)
-                        oneIter = cached[test] = RunOneIter(test, p);
-                    if (oneIter == last)
+                    return null;
+                }
+
+                for (var i = 0; i < Vector256<uint>.Count; i++)
+                {
+                    if ((testRes & (1 << (4 * i))) != 0)
                     {
                         var ret = Solve(goal[0..^1], (curr << 3) | i, cached, p);
                         if (ret != null) return ret;
                     }
                 }
+                //var pre = (curr << 3) & 0x3ff;
+                //for (var i = 0L; i < 8; i++)
+                //{
+                //    var test = pre | i;
+                //    var oneIter = cached[test];
+                //    if (oneIter == null)
+                //        oneIter = cached[test] = RunOneIter(test, p);
+                //    if (oneIter == last)
+                //    {
+                //        var ret = Solve(goal[0..^1], (curr << 3) | i, cached, p);
+                //        if (ret != null) return ret;
+                //    }
+                //}
 
                 return null;
             }
