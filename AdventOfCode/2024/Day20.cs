@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Frozen;
+using System.Collections.Generic;
 using System.Diagnostics;
 using AdventOfCode.lib;
 
@@ -67,7 +68,7 @@ internal static partial class Day20
         return cheats.Count.ToString();
     }
 
-    [AnswerMethod(2024, 20, 2)]
+    //[AnswerMethod(2024, 20, 2)]
     public static string Part2(string[] input)
     {
         //input = """
@@ -94,36 +95,27 @@ internal static partial class Day20
         var start = grid.Single(kvp => kvp.Value == 'S').Key;
         var end = grid.Single(kvp => kvp.Value == 'E').Key;
 
-        // var cheats = ValueTupleExtensions.GetCardinalDirections<int, int>().SelectMany(d => d.GetCardinalNeighbors()).Distinct().ToArray();
-
-        var v = new HashSet<(int, int)>();
-        var q = new List<(int, int)>();
-        q.Add(end);
+        var q = new Queue<(int, int)>();
+        q.Enqueue(end);
         distanceToEnd[end] = 0;
-        var currDist = 0;
-        while (q.Any())
-        {
-            var newQ = new List<(int, int)>();
-            currDist++;
-            foreach (var item in q)
-            {
-                foreach (var n in item.GetCardinalNeighbors().Where(n => grid.TryGetValue(n, out var val) && val != '#'))
-                {
-                    if (distanceToEnd[n] != -1)
-                        continue;
 
-                    distanceToEnd[n] = currDist;
-                    newQ.Add(n);
-                }
+        while (q.TryDequeue(out var curr))
+        {
+            foreach (var n in curr.GetCardinalNeighbors().Where(n => grid.TryGetValue(n, out var val) && val != '#'))
+            {
+                if (distanceToEnd[n] != -1)
+                    continue;
+
+                distanceToEnd[n] = distanceToEnd[curr] + 1;
+                q.Enqueue(n);
             }
-            q = newQ;
         }
 
         var cheats = new HashSet<((int, int), (int, int))>();
-        var cheatsDict = new Dictionary<int, HashSet<((int, int), (int, int))>>();
+        var nAwayNeighbors = NAwayNeighbors(20);
         foreach (var (cheatStart, _) in grid.Where(kvp => kvp.Value != '#'))
         {
-            foreach (var (cheatEnd, cost) in NAwayNeighbors(20).Select(d => (cheatStart.Plus(d.Key), d.Value)).Where(n => grid.TryGetValue(n.Item1, out var val) && val != '#'))
+            foreach (var (cheatEnd, cost) in nAwayNeighbors.Select(d => (cheatStart.Plus(d.Key), d.Value)).Where(n => grid.TryGetValue(n.Item1, out var val) && val != '#'))
             {
                 if (distanceToEnd[cheatStart] <= distanceToEnd[cheatEnd])
                     continue;
@@ -133,19 +125,14 @@ internal static partial class Day20
                 if (max >= min + 100 + cost)
                 {
                     cheats.Add((cheatStart, cheatEnd));
-                    ((cheatsDict.GetValueRefOrAddDefault(max - min - cost, out _)) ??= new HashSet<((int, int), (int, int))>()).Add((cheatStart, cheatEnd));
+                    //((cheatsDict.GetValueRefOrAddDefault(max - min - cost, out _)) ??= new HashSet<((int, int), (int, int))>()).Add((cheatStart, cheatEnd));
                 }
             }
         }
 
-        foreach (var entry in cheatsDict.OrderBy(kvp => kvp.Key))
-        {
-            Console.WriteLine($"There are {entry.Value.Count()} cheats that save {entry.Key} picoseconds.");
-        }
-
         return cheats.Count.ToString();
 
-        Dictionary<(int, int), int> NAwayNeighbors(int N)
+        static Dictionary<(int, int), int> NAwayNeighbors(int N)
         {
             var ns = new Dictionary<(int, int), int>();
             for (var i = -N; i <= N; i++) 
@@ -157,6 +144,84 @@ internal static partial class Day20
                 }
             }
             return ns;
+        }
+    }
+
+    [AnswerMethod(2024, 20, 2)]
+    public static string Part2_faster(string[] input)
+    {
+        //input = """
+        //    ###############
+        //    #...#...#.....#
+        //    #.#.#.#.#.###.#
+        //    #S#...#.#.#...#
+        //    #######.#.#.###
+        //    #######.#.#...#
+        //    #######.#.###.#
+        //    ###..E#...#...#
+        //    ###.#######.###
+        //    #...###...#...#
+        //    #.#####.#.###.#
+        //    #.#...#.#.#...#
+        //    #.#.#.#.#.#.###
+        //    #...#...#...###
+        //    ###############
+        //    """.Split('\n', StringSplitOptions.TrimEntries);
+
+        var grid = input.EnumerateGrid().Where(p => p.value != '#').Select(p => p.point).ToHashSet()!;
+        var start = input.FindChar('S');
+        var end = input.FindChar('E');
+
+        var distanceToEnd = new Dictionary<(int, int), int>();
+        var curr = end;
+        distanceToEnd[end] = 0;
+        while (curr != start)
+        {
+            foreach (var n in curr.GetCardinalNeighbors())
+            {
+                if (grid.Contains(n) && !distanceToEnd.ContainsKey(n))
+                {
+                    curr = n;
+                    break;
+                }
+            }
+
+            distanceToEnd[curr] = distanceToEnd.Count;
+        }
+
+        var ans = 0;
+        var nAwayNeighbors = NAwayNeighbors(20);
+        foreach (var (cheatEnd, cheatEndDistance) in distanceToEnd)
+        {
+            distanceToEnd.Remove(cheatEnd);
+            foreach (var (pos, cost) in nAwayNeighbors)
+            {
+                var cheatStart = cheatEnd.Plus(pos);
+
+                if (!distanceToEnd.TryGetValue(cheatStart, out var cheatStartDistance))
+                    continue;
+
+                if (cheatStartDistance >= cheatEndDistance + 100 + cost)
+                {
+                    ans++;
+                }
+            }
+        }
+
+        return ans.ToString();
+
+        static ((int, int), int)[] NAwayNeighbors(int N)
+        {
+            var ns = new Dictionary<(int, int), int>();
+            for (var i = -N; i <= N; i++)
+            {
+                for (var j = -N; j <= N; j++)
+                {
+                    if (Math.Abs(i) + Math.Abs(j) <= N)
+                        ns[(i, j)] = Math.Abs(i) + Math.Abs(j);
+                }
+            }
+            return [.. ns.Select(ValueTupleExtensions.ToValueTuple)];
         }
     }
 }

@@ -98,6 +98,7 @@ public class AnswerMethodsGenerator : IIncrementalGenerator
                                         AnswerMethodArgumentType.None => $"string",
                                         AnswerMethodArgumentType.String => $"string",
                                         AnswerMethodArgumentType.StringArray => @$"string[]",
+                                        _ => throw new System.NotImplementedException(),
                                     }}} input;
 
                                     [GlobalSetup]
@@ -110,6 +111,7 @@ public class AnswerMethodsGenerator : IIncrementalGenerator
                                                 AnswerMethodArgumentType.None => $"{func.methodName}()",
                                                 AnswerMethodArgumentType.String => $"{func.methodName}(input)",
                                                 AnswerMethodArgumentType.StringArray => @$"{func.methodName}(input)",
+                                                _ => throw new System.NotImplementedException(),
                                             }}};
                                 }
                             """);
@@ -119,6 +121,7 @@ public class AnswerMethodsGenerator : IIncrementalGenerator
                         AnswerMethodArgumentType.None => $"_ => {m.methodName}",
                         AnswerMethodArgumentType.String => $"str => {m.methodName}(str)",
                         AnswerMethodArgumentType.StringArray => @$"str => {m.methodName}(str.Split('\n'))",
+                        _ => throw new System.NotImplementedException(),
                     }));
                 }
 
@@ -140,6 +143,7 @@ public class AnswerMethodsGenerator : IIncrementalGenerator
                         AnswerMethodArgumentType.None => $"_ => {m.methodName}",
                         AnswerMethodArgumentType.String => $"str => {m.methodName}(str)",
                         AnswerMethodArgumentType.StringArray => @$"str => {m.methodName}(str.Split('\n'))",
+                        _ => throw new System.NotImplementedException(),
                     }));
 
                     sb.AppendLine(

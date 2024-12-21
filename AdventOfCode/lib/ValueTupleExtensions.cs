@@ -111,6 +111,8 @@ internal static class ValueTupleExtensions
     {
         return pt1.Item1 >= pt2.Item1 && pt1.Item2 >= pt2.Item2;
     }
+
+    public static (T1, T2) ToValueTuple<T1, T2>(KeyValuePair<T1, T2> kvp) => (kvp.Key, kvp.Value);
 }
 
 static class Direction
