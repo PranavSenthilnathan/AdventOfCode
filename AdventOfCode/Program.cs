@@ -95,6 +95,7 @@ internal class Program
                 var runArg = GetInputAsync(year, day).GetAwaiter().GetResult();
                 foreach (var m in runs)
                 {
+                    GC.Collect();
                     var timer = Stopwatch.StartNew();
                     var ans = m(runArg);
                     Console.WriteLine($"""The answer for {new DateTime(year, 12, day).ToShortDateString()} part {part} is: {ans}""");

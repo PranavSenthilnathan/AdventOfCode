@@ -50,13 +50,13 @@ internal static partial class Day21
         foreach (var line in input)
         {
             var min = long.MaxValue;
-            var p1s = FindPaths((3, 1), line, keypad, keypad.Values.ToHashSet()).ToList();
+            var p1s = FindPaths((3, 1), line, keypad, [.. keypad.Values]).ToList();
             foreach (var p1 in p1s)
             {
-                var p2s = FindPaths((3, 2), p1.ToList(), dpad, dpad.Values.ToHashSet()).ToList();
+                var p2s = FindPaths((3, 2), p1.ToList(), dpad, [.. dpad.Values]).ToList();
                 foreach (var p2 in p2s)
                 {
-                    var p3s = FindPaths((3, 2), p2.ToList(), dpad, dpad.Values.ToHashSet());
+                    var p3s = FindPaths((3, 2), p2.ToList(), dpad, [.. dpad.Values]);
                     min = Math.Min(min, p3s.Min(p => p.Count()));
                 }
             }
@@ -157,26 +157,90 @@ internal static partial class Day21
 
         var dpadLocations = dpad.Values.ToHashSet();
 
+        var cache = new Dictionary<(char, char, int), long>();
         var ans = 0L;
         foreach (var line in input)
         {
+            var p1s = FindPaths((3, 1), line, keypad, [.. keypad.Values]).ToList();
             var min = long.MaxValue;
-            var p1s = FindPaths((3, 1), line, keypad, keypad.Values.ToHashSet()).ToList();
             foreach (var p1 in p1s)
             {
-                var p2s = FindPaths((3, 2), p1.ToList(), dpad, dpad.Values.ToHashSet()).ToList();
-                foreach (var p2 in p2s)
+                ReadOnlySpan<char> temp = p1.ToArray();
+                var len = 0L;
+                var start = 'A';
+                for (global::System.Int32 i = 0; i < temp.Length; i++)
                 {
-                    var p3s = FindPaths((3, 2), p2.ToList(), dpad, dpad.Values.ToHashSet());
-                    min = Math.Min(min, p3s.Min(p => p.Count()));
+                    var end = temp[i];
+                    len += Length(start, end, 25);
+                    start = end;
                 }
+
+                //for (global::System.Int32 i = 1; i <= 25; i++)
+                //{
+                //    temp = FindPath((3, 2), temp, dpad);
+                //}
+
+                min = Math.Min(min, len);
             }
-            Console.WriteLine(long.Parse(line[0..^1]));
+
             Console.WriteLine(min);
-            ans += long.Parse(line[0..^1]) * min;
+            ans += min * long.Parse(line[0..^1]);
         }
 
         return ans.ToString();
+
+        long Length(char start, char end, int remainingIterations)
+        {
+            if (remainingIterations == 0) return 1;
+
+            if (start == end) return 1; // just press A
+
+            if (cache.TryGetValue((start, end, remainingIterations), out var cached))
+                return cached;
+
+            return cache[(start, end, remainingIterations)] = ((start, end) switch
+            {
+                ('>', '^') => long.Min(ComputeHelper('^', '<'), ComputeHelper('<', '^')),
+                ('>', 'v') => ComputeHelper('<'),
+                ('>', '<') => ComputeHelper('<', '<'),
+
+                ('^', '>') => long.Min(ComputeHelper('>', 'v'), ComputeHelper('v', '>')),
+                ('^', '<') => ComputeHelper('v', '<'),
+                ('^', 'v') => ComputeHelper('v'),
+
+                ('<', '>') => ComputeHelper('>', '>'),
+                ('<', '^') => ComputeHelper('>', '^'),
+                ('<', 'v') => ComputeHelper('>'),
+
+                ('v', '>') => ComputeHelper('>'),
+                ('v', '^') => ComputeHelper('^'),
+                ('v', '<') => ComputeHelper('<'),
+
+                ('A', '>') => ComputeHelper('v'),
+                ('A', '^') => ComputeHelper('<'),
+                ('A', '<') => long.Min(ComputeHelper('v', '<', '<'), ComputeHelper('<', 'v', '<')),
+                ('A', 'v') => long.Min(ComputeHelper('v', '<'), ComputeHelper('<', 'v')),
+
+                ('>', 'A') => ComputeHelper('^'),
+                ('^', 'A') => ComputeHelper('>'),
+                ('<', 'A') => long.Min(ComputeHelper('>', '>', '^'), ComputeHelper('>', '^', '>')),
+                ('v', 'A') => long.Min(ComputeHelper('>', '^'), ComputeHelper('^', '>')),
+
+                _ => throw new Exception(),
+            });
+
+            long ComputeHelper(params ReadOnlySpan<char> chars)
+            {
+                long res = 0;
+                char start = 'A';
+                for (global::System.Int32 i = 0; i < chars.Length; i++)
+                {
+                    res += Length(start, chars[i], remainingIterations - 1);
+                    start = chars[i];
+                }
+                return res + Length(start, 'A', remainingIterations - 1);
+            }
+        }
 
         static IEnumerable<IEnumerable<char>> FindPaths((int, int) curr, IEnumerable<char> origPath, Dictionary<char, (int, int)> lookup, HashSet<(int, int)> locationSet)
         {
