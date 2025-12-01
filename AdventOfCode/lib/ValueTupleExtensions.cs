@@ -9,10 +9,26 @@ internal static class ValueTupleExtensions
         where T2 : IAdditionOperators<T2, T2, T2>
         => (a.Item1 + b.Item1, a.Item2 + b.Item2);
 
+    extension<T1, T2>((T1, T2))
+        where T1 : IAdditionOperators<T1, T1, T1>
+        where T2 : IAdditionOperators<T2, T2, T2>
+    {
+        public static (T1, T2) operator +((T1, T2) a, (T1, T2) b) =>
+            (a.Item1 + b.Item1, a.Item2 + b.Item2);
+    }
+
     public static (T1, T2) Minus<T1, T2>(this (T1, T2) a, (T1, T2) b)
         where T1 : ISubtractionOperators<T1, T1, T1>
         where T2 : ISubtractionOperators<T2, T2, T2>
         => (a.Item1 - b.Item1, a.Item2 - b.Item2);
+
+    extension<T1, T2>((T1, T2))
+        where T1 : ISubtractionOperators<T1, T1, T1>
+        where T2 : ISubtractionOperators<T2, T2, T2>
+    {
+        public static (T1, T2) operator -((T1, T2) a, (T1, T2) b) =>
+            (a.Item1 - b.Item1, a.Item2 - b.Item2);
+    }
 
     /// <summary>
     /// Clockwise from North
@@ -110,6 +126,23 @@ internal static class ValueTupleExtensions
         where T2 : IComparisonOperators<T2, T2, bool>
     {
         return pt1.Item1 >= pt2.Item1 && pt1.Item2 >= pt2.Item2;
+    }
+
+    extension<T1, T2>((T1, T2))
+        where T1 : IComparisonOperators<T1, T1, bool>
+        where T2 : IComparisonOperators<T2, T2, bool>
+    {
+        public static bool operator <((T1, T2) a, (T1, T2) b) =>
+            a.Item1 < b.Item1 && a.Item2 < b.Item2;
+
+        public static bool operator <=((T1, T2) a, (T1, T2) b) =>
+            a.Item1 <= b.Item1 && a.Item2 <= b.Item2;
+
+        public static bool operator >((T1, T2) a, (T1, T2) b) =>
+            a.Item1 > b.Item1 && a.Item2 > b.Item2;
+
+        public static bool operator >=((T1, T2) a, (T1, T2) b) =>
+            a.Item1 >= b.Item1 && a.Item2 >= b.Item2;
     }
 
     public static (T1, T2) ToValueTuple<T1, T2>(KeyValuePair<T1, T2> kvp) => (kvp.Key, kvp.Value);

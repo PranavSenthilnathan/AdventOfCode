@@ -5,7 +5,7 @@
     },
     "Pick": {
       "commandName": "Project",
-      "commandLineArgs": "2024 22 2"
+      "commandLineArgs": "2025"
     },
     "Benchmark": {
       "commandName": "Project",
