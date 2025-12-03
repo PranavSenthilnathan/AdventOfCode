@@ -35,4 +35,8 @@
     <ProjectReference Include="..\AnswerMethodsGenerator\AnswerMethodsGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
 
+	<ItemGroup>
+		<Using Include="AdventOfCode.lib"/>
+	</ItemGroup>
+
 </Project>
