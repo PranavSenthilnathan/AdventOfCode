@@ -8,7 +8,7 @@ internal static class Day4
     public static string Part1(string[] input)
     {
         var ans = 0;
-        var grid = input.Select(line => line.Trim()).ToArray().CreateGrid();
+        var grid = input.CreateGrid();
 
         foreach (var node in grid)
         {
@@ -30,9 +30,9 @@ internal static class Day4
     }
 
     [AnswerMethod(2025, 4, 2)]
-    public static string Part2(IEnumerable<string> input)
+    public static string Part2(string[] input)
     {
-        var grid = input.Select(line => line.Trim()).ToArray().CreateGrid();
+        var grid = input.CreateGrid();
         var cnt = grid.Count;
         bool removed;
         do
